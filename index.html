@@ -1,0 +1,251 @@
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI-Smartwatch Health Monitoring System</title>
+
+    <!-- React & Babel -->
+    <script src="https://cdn.jsdelivr.net/npm/react@18.0.0/umd/react.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.0.0/umd/react-dom.development.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.js"></script>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Icons & Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container { height: 200px; width: 100%; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Firebase Config
+        const firebaseConfig = {
+            apiKey: "AIzaSyC6_wpmfyvCl1nOHpqf8CdZKi_LZ5s_Zm0",
+            authDomain: "healthchat123-1d9a6.firebaseapp.com",
+            projectId: "healthchat123-1d9a6",
+            storageBucket: "healthchat123-1d9a6.firebasestorage.app",
+            messagingSenderId: "260295716732",
+            appId: "1:260295716732:web:d79f08852539080aeffef9"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const firestore = firebase.firestore();
+
+        // Main App
+        function App() {
+            const [user, setUser] = useState(null);
+            const [currentPage, setCurrentPage] = useState('home');
+
+            useEffect(() => {
+                const unsubscribe = auth.onAuthStateChanged((u) => setUser(u));
+                return () => unsubscribe();
+            }, []);
+
+            function renderPage() {
+                if (user) return <Dashboard user={user} setCurrentPage={setCurrentPage} />;
+                switch (currentPage) {
+                    case 'login': return <LoginPage setCurrentPage={setCurrentPage} />;
+                    case 'register': return <RegisterPage setCurrentPage={setCurrentPage} />;
+                    case 'home': return <LandingPage setCurrentPage={setCurrentPage} />;
+                    default: return <LandingPage setCurrentPage={setCurrentPage} />;
+                }
+            }
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    <Header setCurrentPage={setCurrentPage} />
+                    <main className="flex-grow container mx-auto px-4 py-6">
+                        {renderPage()}
+                    </main>
+                    <Footer />
+                </div>
+            );
+        }
+
+        // Header
+        function Header({ setCurrentPage }) {
+            return (
+                <header className="bg-white shadow-sm">
+                    <div className="container mx-auto px-4 py-3 flex justify-between items-center">
+                        <div className="flex items-center">
+                            <img src="https://placehold.co/40x40/0066cc/ffffff?text=⌚" className="mr-2" />
+                            <span className="text-xl font-bold text-blue-600">HealthWatch AI</span>
+                        </div>
+                        <nav>
+                            <ul className="flex space-x-6">
+                                <li><button onClick={() => setCurrentPage('home')} className="hover:text-blue-600">Home</button></li>
+                                <li><button onClick={() => setCurrentPage('login')} className="hover:text-blue-600">Login</button></li>
+                                <li><button onClick={() => setCurrentPage('register')} className="hover:text-blue-600">Register</button></li>
+                            </ul>
+                        </nav>
+                    </div>
+                </header>
+            );
+        }
+
+        // Landing Page
+        function LandingPage({ setCurrentPage }) {
+            return (
+                <div className="py-12 text-center">
+                    <h1 className="text-4xl font-bold text-blue-600 mb-6">Monitor your health 24/7 with AI</h1>
+                    <p className="text-lg text-gray-600 mb-8">AI-powered health tracking for better wellness.</p>
+                    <button 
+                        onClick={() => setCurrentPage('login')}
+                        className="bg-blue-600 text-white px-8 py-3 rounded-full hover:bg-blue-700"
+                    >
+                        Get Started
+                    </button>
+                </div>
+            );
+        }
+
+        // Login Page
+        function LoginPage({ setCurrentPage }) {
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [error, setError] = useState('');
+
+            const handleLogin = async (e) => {
+                e.preventDefault();
+                try {
+                    await auth.signInWithEmailAndPassword(email, password);
+                    setCurrentPage('dashboard');
+                } catch (err) { setError(err.message); }
+            };
+
+            return (
+                <div className="max-w-md mx-auto">
+                    <h2 className="text-2xl font-semibold mb-6">Login</h2>
+                    <form onSubmit={handleLogin} className="bg-white p-6 rounded shadow">
+                        <input type="email" placeholder="Email"
+                            className="w-full mb-3 p-2 border rounded"
+                            value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <input type="password" placeholder="Password"
+                            className="w-full mb-3 p-2 border rounded"
+                            value={password} onChange={(e) => setPassword(e.target.value)} />
+                        {error && <p className="text-red-500 mb-3">{error}</p>}
+                        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">Login</button>
+                    </form>
+                    <p className="mt-3 text-center">
+                        <button onClick={() => setCurrentPage('register')} className="text-blue-600">Register</button>
+                    </p>
+                </div>
+            );
+        }
+
+        // Register Page
+        function RegisterPage({ setCurrentPage }) {
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [confirm, setConfirm] = useState('');
+            const [error, setError] = useState('');
+
+            const handleRegister = async (e) => {
+                e.preventDefault();
+                if (password !== confirm) return setError('Passwords do not match');
+                try {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                    setCurrentPage('dashboard');
+                } catch (err) { setError(err.message); }
+            };
+
+            return (
+                <div className="max-w-md mx-auto">
+                    <h2 className="text-2xl font-semibold mb-6">Register</h2>
+                    <form onSubmit={handleRegister} className="bg-white p-6 rounded shadow">
+                        <input type="email" placeholder="Email"
+                            className="w-full mb-3 p-2 border rounded"
+                            value={email} onChange={(e) => setEmail(e.target.value)} />
+                        <input type="password" placeholder="Password"
+                            className="w-full mb-3 p-2 border rounded"
+                            value={password} onChange={(e) => setPassword(e.target.value)} />
+                        <input type="password" placeholder="Confirm Password"
+                            className="w-full mb-3 p-2 border rounded"
+                            value={confirm} onChange={(e) => setConfirm(e.target.value)} />
+                        {error && <p className="text-red-500 mb-3">{error}</p>}
+                        <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">Register</button>
+                    </form>
+                </div>
+            );
+        }
+
+        // Dashboard
+        function Dashboard({ user, setCurrentPage }) {
+            const [vitals, setVitals] = useState({ heartRate: 72, spo2: 98, bp: "120/80", ecg: "Normal" });
+
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setVitals({
+                        heartRate: Math.floor(Math.random() * 40) + 60,
+                        spo2: Math.floor(Math.random() * 5) + 95,
+                        bp: `${110 + Math.floor(Math.random()*20)}/${70 + Math.floor(Math.random()*15)}`,
+                        ecg: "Normal"
+                    });
+                }, 5000);
+                return () => clearInterval(timer);
+            }, []);
+
+            return (
+                <div>
+                    <h2 className="text-2xl font-semibold mb-6">Welcome, {user.email}</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <VitalCard title="Heart Rate" value={`${vitals.heartRate} bpm`} color="red" />
+                        <VitalCard title="SpO₂" value={`${vitals.spo2}%`} color="green" />
+                        <VitalCard title="Blood Pressure" value={vitals.bp} color="blue" />
+                        <VitalCard title="ECG" value={vitals.ecg} color="purple" />
+                    </div>
+                    <button 
+                        onClick={() => { auth.signOut(); setCurrentPage('home'); }}
+                        className="mt-6 bg-red-600 text-white px-4 py-2 rounded"
+                    >
+                        Logout
+                    </button>
+                </div>
+            );
+        }
+
+        // Vital Card
+        function VitalCard({ title, value, color }) {
+            const colors = {
+                red: "bg-red-100 text-red-800",
+                green: "bg-green-100 text-green-800",
+                blue: "bg-blue-100 text-blue-800",
+                purple: "bg-purple-100 text-purple-800"
+            };
+            return (
+                <div className="bg-white p-6 rounded shadow">
+                    <h4 className="text-gray-600">{title}</h4>
+                    <p className="text-2xl font-bold">{value}</p>
+                    <div className={`mt-2 px-2 py-1 inline-block rounded ${colors[color]}`}>Normal</div>
+                </div>
+            );
+        }
+
+        // Footer
+        function Footer() {
+            return (
+                <footer className="bg-gray-800 text-white py-6 mt-12 text-center">
+                    <p>&copy; 2025 HealthWatch AI. All rights reserved.</p>
+                </footer>
+            );
+        }
+
+        // Render
+        ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+</body>
+</html>
